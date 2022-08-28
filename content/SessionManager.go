@@ -7,6 +7,8 @@ import (
 )
 
 type GlobalSession struct {
+	WorkerNum int
+	Jobs chan
 }
 
 var instance_gs *GlobalSession
@@ -21,9 +23,19 @@ func GetGlobalSession() *GlobalSession {
 
 func (gs *GlobalSession) Init() {
 	log.Println("INIT_GlobalSession")
-
+	gs.WorkerNum = 10
+	gs.Jobs := make(chan int, numJobs)
 }
 
+func (gs *GlobalSession) SendByteByWoker(c net.Conn, data []byte) {
+	go gs.worker(c, data)
+
+}
+func (gs *GlobalSession) worker(c net.Conn, data []byte) {
+	for j := range gs.Jobs {
+		gs.SendByte(c, data)
+	}
+}
 func (gs *GlobalSession) SendByte(c net.Conn, data []byte) {
 	if c != nil {
 		sent, err := c.Write(data)
